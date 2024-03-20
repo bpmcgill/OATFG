@@ -3,12 +3,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34714.143
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OATFG.Core", "OATFG.Core\OATFG.Core.csproj", "{C1D92C1B-734E-4464-8CCE-2F3F6EE40764}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OATFG.Core", "OATFG.Core\OATFG.Core.csproj", "{C1D92C1B-734E-4464-8CCE-2F3F6EE40764}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configuration", "{B1A314C4-91FB-4704-BDFD-6D4B32368694}"
 	ProjectSection(SolutionItems) = preProject
 		appsettings.json = appsettings.json
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{40B8A5CD-B86C-48B4-B1B2-45C245537C93}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OATFG.CSXUnitGenerator", "OATFG.CSXUnitGenerator\OATFG.CSXUnitGenerator.csproj", "{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OATFG.RFGenerator", "OATFG.RFGenerator\OATFG.RFGenerator.csproj", "{D607266C-BF0D-4EFE-9709-A261B0E6B191}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +29,14 @@ Global
 		{C1D92C1B-734E-4464-8CCE-2F3F6EE40764}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C1D92C1B-734E-4464-8CCE-2F3F6EE40764}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C1D92C1B-734E-4464-8CCE-2F3F6EE40764}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D607266C-BF0D-4EFE-9709-A261B0E6B191}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D607266C-BF0D-4EFE-9709-A261B0E6B191}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D607266C-BF0D-4EFE-9709-A261B0E6B191}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D607266C-BF0D-4EFE-9709-A261B0E6B191}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
