@@ -2,7 +2,7 @@
 
 namespace OATFG.CSXUnitGenerator.DataModels
 {
-    internal class CSXEndpoint : Endpoint
+    public class CSXEndpoint : Endpoint
     {
         /// <summary>
         /// This is the name of the method that will be generated for the endpoint for the C# Framework.

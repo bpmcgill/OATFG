@@ -2,7 +2,7 @@
 
 namespace OATFG.CSXUnitGenerator.DataModels
 {
-    internal class CSXTag : Tag
+    public class CSXTag : Tag
     {
         /// <summary>
         /// This is the class and file name used for the endpoint file. It is used for the C# Framework.

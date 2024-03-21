@@ -41,4 +41,31 @@ public async Task<HttpResponseMessage> Users(string id, string name, string requ
    * A method to create a request with a body. This method will take in the HTTP method, a string for the endpoint path, and a string for the path to the request body json file. It will call the private method with the request and it will return the EndpointRequest object.
    * A method to return the contents of the request body file. This method will take in a string for the path to the request body json file. It will return the contents of the file as a string.
 
-
+### Folder Structure
+```
+|[CSXOutputFolder]                         (Output Folder)
++--|[{CSXProjectName}]                     (Solution Folder)
+   +--|[{CSXCoreProjectName}]              (Core Project Folder)
+   |  +--{CSXCoreProjectName}.csproj
+   |  +--BaseFixture.cs	
+   |  +--{Tag1}Fixture.cs
+   |  +--{Tag2}Fixture.cs
+   |  +--{TagN}Fixture.cs
+   +--|[{CSXTestProjectName}]              (Test Project Folder))  
+   |  +--{CSXTestProjectName}.csproj
+   |  +--|[TestData]                       (Test Data Folder)
+   |  |  +--|[RequestBodies]               (Request Body Folder)
+   |  |  |  +--{Tag1}RequestBody.json
+   |  |  |  +--{Tag2}RequestBody.json
+   |  |  |  +--{TagN}RequestBody.json
+   |  |  +--{Tag1}TestData.json
+   |  |  +--{Tag2}TestData.json
+   |  |  +--{TagN}TestData.json
+   |  +--{Tag1}Tests.cs
+   |  +--{Tag2}Tests.cs
+   |  +--{TagN}Tests.cs
+   +--|[XunitExtensions]                   (XUnit Extensions Folder)
+   |  +--XunitExtensions.csproj
+   |  +--XunitExtensions.cs
+   +--CSXProjectName.sln
+```

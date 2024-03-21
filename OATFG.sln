@@ -10,17 +10,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 		appsettings.json = appsettings.json
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionItems", "SolutionItems", "{40B8A5CD-B86C-48B4-B1B2-45C245537C93}"
-	ProjectSection(SolutionItems) = preProject
-		.gitignore = .gitignore
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OATFG.CSXUnitGenerator", "OATFG.CSXUnitGenerator\OATFG.CSXUnitGenerator.csproj", "{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OATFG.CSXUnitGenerator", "OATFG.CSXUnitGenerator\OATFG.CSXUnitGenerator.csproj", "{DDDCAE11-6781-46D2-A37D-7BC21C9420A8}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OATFG.RFGenerator", "OATFG.RFGenerator\OATFG.RFGenerator.csproj", "{D607266C-BF0D-4EFE-9709-A261B0E6B191}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OATFG.RFGenerator", "OATFG.RFGenerator\OATFG.RFGenerator.csproj", "{D607266C-BF0D-4EFE-9709-A261B0E6B191}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E9AA701A-7575-4024-A123-6DDA15244E36}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		ReadMe.md = ReadMe.md
 	EndProjectSection
 EndProject
