@@ -1,9 +1,20 @@
 ﻿using OATFG.Core.DataModels;
+using System.Collections.ObjectModel;
 
 namespace OATFG.RFGenerator.DataModels
 {
     internal class RFTag : Tag
     {
+        /// <summary>
+        /// This is the list of the unique path variables for this tag.
+        /// </summary>
+        public ObservableCollection<string>? DistinctEndpointPathVariables { get; set; }
+
+        /// <summary>
+        /// This is the list of the unique query variables for this tag.
+        /// </summary>
+        public ObservableCollection<string>? DistinctEndpointQueryVariables { get; set; }
+
         /// <summary>
         /// This is the name of the file that will be generated for the actions file. It is used for the Robot Framework.
         /// </summary>

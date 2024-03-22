@@ -6,4 +6,11 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="NSwag.CodeGeneration" Version="14.0.3" />
+    <PackageReference Include="NSwag.CodeGeneration.CSharp" Version="14.0.3" />
+    <PackageReference Include="NSwag.Core" Version="14.0.3" />
+    <PackageReference Include="NSwag.Core.Yaml" Version="14.0.3" />
+  </ItemGroup>
+
 </Project>

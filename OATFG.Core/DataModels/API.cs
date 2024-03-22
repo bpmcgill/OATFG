@@ -2,7 +2,7 @@
 
 namespace OATFG.Core.DataModels
 {
-    public abstract class API : IAPI
+    public class API : IAPI
     {
         /// <summary>
         /// This is the authentication method used for the API.
@@ -32,6 +32,6 @@ namespace OATFG.Core.DataModels
         /// <summary>
         /// This is the list of groups for the API.
         /// </summary>
-        public virtual ObservableCollection<ITag> Tags { get; set; }
+        public virtual ObservableCollection<ITag>? Tags { get; set; }
     }
 }

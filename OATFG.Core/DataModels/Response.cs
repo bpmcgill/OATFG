@@ -1,6 +1,10 @@
-﻿namespace OATFG.Core.DataModels
+﻿using System.Collections.ObjectModel;
+
+namespace OATFG.Core.DataModels
 {
-    public abstract class Response : IResponse
+    //TODO: Move response code to its own class file and create interface for it
+
+    public class Response : IResponse
     {
         /// <summary>
         /// The body of the response code provided by swagger. If it is null then there is no body.
