@@ -13,8 +13,27 @@ namespace OATFG.Core.Utilities
         public static string LowerCaseFirstLetter(this string input)
             => string.Concat(input[..1].ToLower(), input[1..]);
 
+        public static string MakeFileSafeName(this string input)
+            => input
+            .Replace("-", "_")
+            .Replace(".", "_")
+            .Replace(":", "_")
+            .Replace("?", "_")
+            .Replace("!", "_")
+            .Replace(",", "_")
+            .Replace("'", "_")
+            .Replace("\"", "_")
+            .Replace(";", "_")
+            .Replace("(", "_")
+            .Replace(")", "_")
+            .Replace("&", "")
+            .ReduceDashesToOne()
+            .ReduceUnderscoresToOne()
+            .ReduceSpacesToOne()
+            .Replace(" ", "_");
+
         public static string MakePascalCase(this string input)
-            => string.Join("", input.Split(' ').Select(x => string.Concat(x.First().ToString().ToUpper(), x.AsSpan(1))));
+                    => string.Join("", input.Split(' ').Select(x => string.Concat(x.First().ToString().ToUpper(), x.AsSpan(1))));
 
         public static string MakeSentenceCase(this string input)
             => input[0].ToString().ToUpper() + input[1..].ToLower().ReduceSpacesToOne();

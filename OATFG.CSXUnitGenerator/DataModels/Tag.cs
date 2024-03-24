@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 
 namespace OATFG.CSXUnitGenerator.DataModels
 {
-    public class CSXTag : Tag
+    public class Tag : ITag
     {
         /// <summary>
         /// This is the class and file name used for the endpoint file. It is used for the C# Framework.
@@ -13,7 +13,11 @@ namespace OATFG.CSXUnitGenerator.DataModels
         /// <summary>
         /// This is the collection of endpoints for the C# Framework.
         /// </summary>
-        public ObservableCollection<CSXEndpoint> CSXEndpoints { get; set; }
+        public ObservableCollection<Endpoint> CSXEndpoints { get; set; }
 
+        /// <summary>
+        /// This is the tag used for sorting the endpoints into groups.
+        /// </summary>
+        public string TagName { get; set; }
     }
 }

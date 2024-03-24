@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 
 namespace OATFG.CSXUnitGenerator
 {
-    public class CSXGenerator
+    public class CSXSolutionGenerator
     {
-        public CSXAPI _api { get; set; }
+        public API _api { get; set; }
 
         public string coreProjectFolder { get; set; }
         public string testProjectFolder { get; set; }
@@ -25,7 +25,7 @@ namespace OATFG.CSXUnitGenerator
         public string solutionFolder { get; set; }
         
 
-        public CSXGenerator(CSXAPI api)
+        public CSXSolutionGenerator(API api)
         {
             _api = api;
             
@@ -43,7 +43,7 @@ namespace OATFG.CSXUnitGenerator
         // The input will be a CSXAPI
         // The output will be a Visual Studio project
         
-        public void GenerateSolution(CSXAPI api)
+        public void GenerateSolution(API api)
         {
             var loggers = new List<ILogger> { new ConsoleLogger() };
 

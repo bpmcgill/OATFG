@@ -18,10 +18,42 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.9.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.9.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="4.9.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="8.0.0" />
+    <PackageReference Include="NuGet.Common" Version="6.9.1" />
+    <PackageReference Include="NuGet.Packaging" Version="6.9.1" />
+    <PackageReference Include="NuGet.Protocol" Version="6.9.1" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Security.Cryptography.Xml" Version="8.0.0" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\OATFG.Core\OATFG.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Resources\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="csxug.appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

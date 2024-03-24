@@ -8,7 +8,6 @@ namespace OATFG.Core.DataModels
         string Environment { get; set; }
         string ProjectName { get; set; }
         string RootFolderName { get; set; }
-        string Server { get; set; }
-        ObservableCollection<ITag>? Tags { get; set; }
+        string Server { get; set; }        
     }
 }

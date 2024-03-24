@@ -1,9 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using OATFG.Core.DataModels;
 
-namespace OATFG.Core.DataModels
+namespace OATFG.CSXUnitGenerator.DataModels
 {
-    //TODO: Move response code to its own class file and create interface for it
-
     public class Response : IResponse
     {
         /// <summary>
