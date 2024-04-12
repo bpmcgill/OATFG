@@ -7,8 +7,7 @@ The goal of this project is to provide a simple way to generate a testing framew
 
 ### C# / XUnit
 The tool will take an OpenAPI specification file and generate a C# project with the following structure:
-* Folder for each tag in the OpenAPI specification. This is where the fixture classes will be generated.
-* A fixture class for each tag in the OpenAPI specification. This class will contain:
+* A file containing a fixture class for each endpoint / path in the OpenAPI specification. This class will contain:
     * A private property for the endpoint url in each class. This property will take in the path values as arguments and return the endpoint path. 
       * Each property will have the following documentation:
           * The HTTP method
@@ -22,17 +21,42 @@ The tool will take an OpenAPI specification file and generate a C# project with 
 // Expected Response Codes: 200, 400, 401, 403, 404, 500
 // Requires Request Body: true
 private string users(string id, string name)
- => $"/users/{id}/{name}";
+    => $"/users/{id}/{name}";
+
+// -- OR --
+
+// Method: GET
+// Description: Get a list of all the users
+// Expected Response Codes: 200, 400, 401, 403, 404, 500
+private string users(string id, string name)
+    => $"/users/{id}/{name}";
 ```
 
-* A corresponding method for each endpoint in the tag. This method will take in the path variables, query variables (if any), and if the endpoint requires a request body, a path to the request body json file.
+* A corresponding method for the path named Request. This method will take in the path variables, query variables (if any), and if the endpoint requires a request body, a path to the request body json file.
 
 ```csharp
-public async Task<HttpResponseMessage> Users(string id, string name, string requestBodyPath = null)
+/// <summary>
+/// Sends a GET request to the /users/{id}/{name} endpoint
+/// </summary>
+/// <param name="id">The id of the user</param>
+/// <param name="name">The name of the user</param>
+/// <param name="requestBodyPath">The path to the request body json file</param>
+public async Task<HttpResponseMessage> Request(string id, string name, string requestBodyPath = null)
 {
     requestBodyPath ?? = $"{basePathToBodies}/users.json";
     CreateRequestWithBody(HttpMethod.Get, users(id, name), requestBodyPath)
 }
+
+// -- OR --
+
+/// <summary>
+/// Sends a GET request to the /users/{id}/{name} endpoint
+/// </summary>
+/// <param name="id">The id of the user</param>
+/// <param name="name">The name of the user</param>
+
+public async Task<HttpResponseMessage> Request(string id, string name)
+	=> CreateRequest(HttpMethod.Get, users(id, name))
 ```
 
 * A Base Fixture class will be created for the endpoint fixtures to inherit from. It will contain the following methods:
@@ -47,10 +71,11 @@ public async Task<HttpResponseMessage> Users(string id, string name, string requ
 +--|[{CSXProjectName}]                     (Solution Folder)
    +--|[{CSXCoreProjectName}]              (Core Project Folder)
    |  +--{CSXCoreProjectName}.csproj
-   |  +--BaseFixture.cs	
-   |  +--{Tag1}Fixture.cs
-   |  +--{Tag2}Fixture.cs
-   |  +--{TagN}Fixture.cs
+   |  +--EndpointBase.cs
+   |  +--{Endpoint1}.cs
+   |  +--{Endpoint2}.cs
+   |  +-- ...
+   |  +--{EndpointN}.cs
    +--|[{CSXTestProjectName}]              (Test Project Folder))  
    |  +--{CSXTestProjectName}.csproj
    |  +--|[TestData]                       (Test Data Folder)
