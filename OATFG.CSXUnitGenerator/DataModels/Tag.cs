@@ -13,7 +13,7 @@ namespace OATFG.CSXUnitGenerator.DataModels
         /// <summary>
         /// This is the collection of endpoints for the C# Framework.
         /// </summary>
-        public ObservableCollection<Endpoint> CSXEndpoints { get; set; }
+        public ObservableCollection<Endpoint> Endpoints { get; set; }
 
         /// <summary>
         /// This is the tag used for sorting the endpoints into groups.

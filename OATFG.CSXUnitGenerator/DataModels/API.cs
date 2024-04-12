@@ -18,7 +18,7 @@ namespace OATFG.CSXUnitGenerator.DataModels
         /// <summary>
         /// This is the collection of tags that will be used for the C# Framework.
         /// </summary>
-        public ObservableCollection<Tag> CSXTags { get; set; }
+        public ObservableCollection<Tag> Tags { get; set; }
 
         /// <summary>
         /// This is the environment for the API.

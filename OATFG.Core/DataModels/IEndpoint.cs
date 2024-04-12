@@ -1,6 +1,4 @@
-﻿using System.Collections.ObjectModel;
-
-namespace OATFG.Core.DataModels
+﻿namespace OATFG.Core.DataModels
 {
     public interface IEndpoint
     {

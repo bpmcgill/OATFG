@@ -8,7 +8,7 @@ namespace OATFG.CSXUnitGenerator.DataModels
         /// <summary>
         /// Theese are the responses for the endpoint.
         /// </summary>
-        public ObservableCollection<Response>? CSXResponses { get; set; }
+        public ObservableCollection<Response>? Responses { get; set; }
 
         /// <summary>
         /// This is the path for the endpoint. The property is used by the C# Framework and the Robot Framework.
