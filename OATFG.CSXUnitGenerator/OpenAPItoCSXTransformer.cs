@@ -21,34 +21,18 @@ namespace OATFG.CSXUnitGenerator
             configurationRoot = configurationBuilder.Build();
         }
 
-        private ObservableCollection<Tag> CreateCSXTagsAndEnpointsFromDocument(OpenApiDocument document)
+        private ObservableCollection<Endpoint> CreateCSXEndpointsFromAPI(OpenApiDocument document)
         {
             try
             {
-                // Create a list of CSXTags from the OpenAPI document
-                ObservableCollection<Tag> csxTags = [];
+                ObservableCollection<Endpoint> endpoints = new();
 
                 foreach (var operation in document.Operations)
                 {
-                    if (csxTags.Any(t => t.TagName == operation.Operation.Tags.FirstOrDefault()))
-                    {
-                        // Add the endpoint to the existing tag
-
-                        csxTags.First(t => t.TagName == operation?.Operation?.Tags?.FirstOrDefault()).Endpoints.Add(GenerateCSXEndpoint(operation, document));
-                    }
-                    else
-                    {
-                        // Create a new tag and add the endpoint
-                        csxTags.Add(new Tag()
-                        {
-                            TagName = operation.Operation.Tags.FirstOrDefault(),
-                            ClassAndFileName = operation.Operation.Tags.FirstOrDefault().MakeFileSafeName().RemoveUnderscores(),
-                            Endpoints = [GenerateCSXEndpoint(operation, document)]
-                        });
-                    }
+                    endpoints.Add(GenerateCSXEndpoint(operation, document));
                 }
 
-                return csxTags;
+                return endpoints;
             }
             catch (Exception ex)
             {
@@ -61,18 +45,31 @@ namespace OATFG.CSXUnitGenerator
         {
             try
             {
-                return new Endpoint
+                var endpointPath = operation.Path;
+                var generatedMethodName = operation.Operation.OperationId.MakePascalCase();
+                var generatedPrivateFieldName = operation.Operation.OperationId.MakePascalCase().LowerCaseFirstLetter();
+                var method = operation.Method.ToString();
+                var operationId = operation.Operation.OperationId ?? Resources.Resources.NoOperationIdForEndpoint;
+                var pathVariables = GetPathVariables(operation);
+                var queryParameters = GetQueryParameters(operation);
+                var requestBody = GetRequestBody(operation);
+                var responses = GetResponses(operation);
+                var summary = operation.Operation.Summary ?? Resources.Resources.NoSummaryForEndpoint;
+                var tagName = operation.Operation.Tags.FirstOrDefault();
+
+                return new()
                 {
-                    EndpointPath = operation.Path,
-                    GeneratedMethodName = operation.Operation.OperationId.MakePascalCase(),
-                    GeneratedPrivateFieldName = operation.Operation.OperationId.MakePascalCase().LowerCaseFirstLetter(),
-                    Method = operation.Method.ToString(),
-                    OperationId = operation.Operation.OperationId ?? Resources.Resources.NoOperationIdForEndpoint,
-                    PathVariables = GetPathVariables(operation),
-                    QueryParameters = GetQueryParameters(operation),
-                    RequestBody = GetRequestBody(operation),
-                    Responses = GetResponses(operation),
-                    Summary = operation.Operation.Summary ?? Resources.Resources.NoSummaryForEndpoint,
+                    EndpointPath = endpointPath,
+                    GeneratedMethodName = generatedMethodName,
+                    GeneratedPrivateFieldName = generatedPrivateFieldName,
+                    Method = method,
+                    OperationId = operationId,
+                    PathVariables = pathVariables,
+                    QueryParameters = queryParameters,
+                    RequestBody = requestBody,
+                    Responses = responses,
+                    Summary = summary,
+                    TagName = tagName
                 };
             }
             catch (Exception)
@@ -317,7 +314,7 @@ namespace OATFG.CSXUnitGenerator
                 AuthenticationType = authenticationType,
                 CoreProjectName = projectName + "Core",
                 TestProjectName = projectName + "Tests",
-                Tags = CreateCSXTagsAndEnpointsFromDocument(document),
+                Endpoints = CreateCSXEndpointsFromAPI(document),
                 Namespace = projectName?.MakeFileSafeName() ?? document.Info.Title.MakeFileSafeName(),
                 Server = document.Servers.FirstOrDefault()?.Url ?? "https://localhost:5000",
                 XUnitExtensionProjectName = configurationRoot.GetSection("XUnitExtensionProjectName").Value ?? "XUnitExtensions"

@@ -43,14 +43,13 @@ namespace OATFG.CSXUnitGenerator
             GenerateEndpointBaseClass(coreNamespace);
 
             // Generate the endpoint classes
-
-            foreach (var tag in _api.Tags)
+            foreach (var endpoint in _api.Endpoints)
             {
-                GenerateEndpointClassFromTag(tag, coreProjectFolder, coreNamespace, requestBodiesFolder, tag.ClassAndFileName);
+                GenerateEndpointFileFromAPI(endpoint, coreProjectFolder, coreNamespace, requestBodiesFolder, endpoint.OperationId.MakeFileSafeName());
             }
         }
 
-        public static void GenerateEndpointClassFromTag(Tag tag, string coreProjectFolder, string coreNamespace, string requestBodiesFolder, string classAndFileName)
+        public static void GenerateEndpointFileFromAPI(Endpoint endpoint, string coreProjectFolder, string coreNamespace, string requestBodiesFolder, string classAndFileName)
         {
             string endpointClassFile = Path.Combine(coreProjectFolder, "Endpoints", $"{classAndFileName}.cs");
 
@@ -84,15 +83,7 @@ namespace OATFG.CSXUnitGenerator
 
             // Add the AccessClient field
             sb.AppendLine("private AccessClient _accessClient;".PrependSpaces(8));
-            sb.AppendLine();
-
-            // if any of the endpoints have a request body, add the pathToBodies field and the path to the bodies folder. The path will be ./testData/requestBodies/{classAndFileName}
-
-            if (tag.Endpoints.Any(e => e.RequestBody != null))
-            {
-                sb.AppendLine($"private string _pathToBodies = \"{Path.Combine(requestBodiesFolder)};".PrependSpaces(8));
-                sb.AppendLine();
-            }
+            sb.AppendLine();            
 
             // Add the dependency injection constructor
             sb.AppendLine($"public {classAndFileName}() : base()".PrependSpaces(8));
@@ -105,28 +96,19 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("};".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
-
-            // For each endpoint, generate the private method for the endpoint string interpolation
-            foreach (var endpoint in tag.Endpoints)
+                        
+            sb.AppendLine(GeneratePrivateMethodForEndpointStringInterpolation(endpoint));
+            sb.AppendLine();
+            
+            if (endpoint.RequestBody != null)
             {
-                sb.AppendLine(GeneratePrivateMethodForEndpointStringInterpolation(endpoint));
-                sb.AppendLine();
+                sb.AppendLine(CreateEndpointAPIRequestMethod(endpoint, requestBodiesFolder));
             }
-
-            // For each endpoint, generate the APIRequest method
-
-            foreach (var endpoint in tag.Endpoints)
+            else
             {
-                if (endpoint.RequestBody != null)
-                {
-                    sb.AppendLine(CreateEndpointAPIRequestMethod(endpoint));
-                }
-                else
-                {
-                    sb.AppendLine(CreateEndpointAPIRequestExpressionBodyMethod(endpoint));
-                }
+                sb.AppendLine(CreateEndpointAPIRequestExpressionBodyMethod(endpoint));
             }
-
+            
             //close the class
             sb.AppendLine("}".PrependSpaces(4));
 
@@ -137,6 +119,11 @@ namespace OATFG.CSXUnitGenerator
             File.WriteAllText(endpointClassFile, sb.ToString());
         }
 
+        /// <summary>
+        /// The method to generate the private method for the endpoint path using string interpolation
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <returns></returns>
         public static string GeneratePrivateMethodForEndpointStringInterpolation(Endpoint endpoint)
         {
             StringBuilder sb = new();
@@ -195,11 +182,18 @@ namespace OATFG.CSXUnitGenerator
             return sb.ToString();
         }
 
+        /// <summary>
+        /// The method to create the expression body API Request method for the endpoint
+        /// </summary>
+        /// <param name="endpoint">The endpoint that will be used to generate an expression body request method </param>
+        /// <returns>A string representing the expression method</returns>
         public static string CreateEndpointAPIRequestExpressionBodyMethod(Endpoint endpoint)
         {
             StringBuilder sb = new();
 
-            sb.Append($"public async Task<APIResponse> {endpoint.GeneratedMethodName}(".PrependSpaces(8));
+            CreateMethodDocumentation(endpoint, sb);
+
+            sb.Append($"public async Task<APIResponse> Request(".PrependSpaces(8));
 
             if (endpoint.PathVariables.Count > 0)
             {
@@ -263,15 +257,63 @@ namespace OATFG.CSXUnitGenerator
 
             sb.AppendLine(");");
 
-
             return sb.ToString();
         }
 
-        public static string CreateEndpointAPIRequestMethod(Endpoint endpoint)
+        /// <summary>
+        /// Creates the documentation for the endpoint API Request method
+        /// </summary>
+        /// <param name="endpoint">The endpoint containing the method to be documented</param>
+        /// <param name="sb">The string builder for writing the documentation to the file</param>
+        private static void CreateMethodDocumentation(Endpoint endpoint, StringBuilder sb)
+        {
+            // add the documentation
+            sb.AppendLine($"/// <summary>".PrependSpaces(8));
+            sb.AppendLine($"/// {endpoint.Summary}".PrependSpaces(8));
+            sb.AppendLine($"/// </summary>".PrependSpaces(8));
+
+            // add the path variables to the documentation
+            if (endpoint.PathVariables.Count > 0)
+            {
+                foreach (var pathVariable in endpoint.PathVariables)
+                {
+                    sb.AppendLine($"/// <param name=\"{pathVariable.Name}\">The value of the {pathVariable.Name} path variable</param>".PrependSpaces(8));
+                }
+            }
+
+            // add the query parameters to the documentation
+
+            if (endpoint.QueryParameters.Count > 0)
+            {
+                foreach (var queryParameter in endpoint.QueryParameters)
+                {
+                    sb.AppendLine($"/// <param name=\"{queryParameter.Name}\">The value of the {queryParameter.Name} query parameter</param>".PrependSpaces(8));
+                }
+            }
+
+
+            if (endpoint.RequestBody != null)
+            {
+                sb.AppendLine($"/// <param name=\"pathToBody\">The path to the request body file</param>".PrependSpaces(8));
+            }
+
+            
+        }
+
+
+        /// <summary>
+        /// The method to create the API request method for the endpoint
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="requestBodyFolder"></param>
+        /// <returns></returns>
+        public static string CreateEndpointAPIRequestMethod(Endpoint endpoint, string requestBodyFolder)
         {
             StringBuilder sb = new();
 
-            sb.Append($"public async Task<APIResponse> {endpoint.GeneratedMethodName}WithBody(".PrependSpaces(8));
+            CreateMethodDocumentation(endpoint, sb);
+
+            sb.Append($"public async Task<APIResponse> Request(".PrependSpaces(8));
 
             if (endpoint.PathVariables.Count > 0)
             {
@@ -304,7 +346,14 @@ namespace OATFG.CSXUnitGenerator
 
             if (endpoint.RequestBody != null)
             {
-                sb.AppendLine(", string? pathToBody = null)");
+                if(endpoint.PathVariables.Count > 0 || endpoint.QueryParameters.Count > 0)
+                {
+                    sb.AppendLine(", string? pathToBody = null)");
+                }
+                else
+                {
+                    sb.AppendLine("string? pathToBody = null)");
+                }
             }
             else
             {
@@ -327,7 +376,7 @@ namespace OATFG.CSXUnitGenerator
 
             if (endpoint.RequestBody != null)
             {
-                sb.AppendLine($"pathToBody ??= $\"{{_pathToBodies}}{endpoint.GeneratedMethodName}.json\";".PrependSpaces(12));
+                sb.AppendLine($"pathToBody ??= $\"{requestBodyFolder}{endpoint.GeneratedMethodName}.json\";".PrependSpaces(12));
                 sb.Append($"return await CreateRequestWithBody({HttpMethod}, {endpoint.GeneratedPrivateFieldName}(".PrependSpaces(12));
             }
             else
