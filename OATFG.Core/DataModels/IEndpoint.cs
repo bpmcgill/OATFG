@@ -1,13 +1,12 @@
-﻿using System.Collections.ObjectModel;
-
-namespace OATFG.Core.DataModels
+﻿namespace OATFG.Core.DataModels
 {
     public interface IEndpoint
     {
         string EndpointPath { get; set; }
         string Method { get; set; }
         string OperationId { get; set; }
-        string? RequestBody { get; set; }        
+        string? RequestBody { get; set; }
         string Summary { get; set; }
+        string TagName { get; set; }
     }
 }
