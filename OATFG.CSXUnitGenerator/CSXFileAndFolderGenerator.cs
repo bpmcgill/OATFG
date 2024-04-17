@@ -83,7 +83,7 @@ namespace OATFG.CSXUnitGenerator
 
             // Add the AccessClient field
             sb.AppendLine("private AccessClient _accessClient;".PrependSpaces(8));
-            sb.AppendLine();            
+            sb.AppendLine();
 
             // Add the dependency injection constructor
             sb.AppendLine($"public {classAndFileName}() : base()".PrependSpaces(8));
@@ -96,10 +96,10 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("};".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
-                        
+
             sb.AppendLine(GeneratePrivateMethodForEndpointStringInterpolation(endpoint));
             sb.AppendLine();
-            
+
             if (endpoint.RequestBody != null)
             {
                 sb.AppendLine(CreateEndpointAPIRequestMethod(endpoint, requestBodiesFolder));
@@ -108,7 +108,7 @@ namespace OATFG.CSXUnitGenerator
             {
                 sb.AppendLine(CreateEndpointAPIRequestExpressionBodyMethod(endpoint));
             }
-            
+
             //close the class
             sb.AppendLine("}".PrependSpaces(4));
 
@@ -297,15 +297,15 @@ namespace OATFG.CSXUnitGenerator
                 sb.AppendLine($"/// <param name=\"pathToBody\">The path to the request body file</param>".PrependSpaces(8));
             }
 
-            
+
         }
 
 
         /// <summary>
         /// The method to create the API request method for the endpoint
         /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="requestBodyFolder"></param>
+        /// <param name="endpoint">The endpoint object to create an api request file</param>
+        /// <param name="requestBodyFolder">The folder the default request body will be stored in.</param>
         /// <returns></returns>
         public static string CreateEndpointAPIRequestMethod(Endpoint endpoint, string requestBodyFolder)
         {
@@ -346,7 +346,7 @@ namespace OATFG.CSXUnitGenerator
 
             if (endpoint.RequestBody != null)
             {
-                if(endpoint.PathVariables.Count > 0 || endpoint.QueryParameters.Count > 0)
+                if (endpoint.PathVariables.Count > 0 || endpoint.QueryParameters.Count > 0)
                 {
                     sb.AppendLine(", string? pathToBody = null)");
                 }
