@@ -135,4 +135,4 @@ dotnet test
 
 ## License
 
-MIT — see [LICENSE](LICENSE). CI runs on GitHub Actions (`.github/workflows/ci.yml`).
+Released under a dual license (see [LICENSE](LICENSE)): **free for open-source projects** with attribution, **paid for commercial use** — commercial use requires a separate license from the copyright holder. CI runs on GitHub Actions (`.github/workflows/ci.yml`).

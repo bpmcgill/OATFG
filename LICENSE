@@ -1,21 +1,43 @@
-MIT License
+OATFG LICENSE
 
 Copyright (c) 2026 OATFG contributors
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software is licensed under a dual model: free for open-source projects
+(with attribution), paid for commercial use.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. GRANT OF LICENSE — OPEN-SOURCE USE
+Subject to the terms of this license, permission is hereby granted, free of
+charge, to any person or organization using, copying, modifying, and/or
+distributing the software (the "Software") in an Open-Source Project,
+provided that:
 
+  a. An "Open-Source Project" means a project whose source code is publicly
+     available under an OSI-approved open-source license, and which does not
+     itself sell the Software or a product or service derived from it.
+  b. All copies or substantial portions of the Software retain the above
+     copyright notice, a copy of this license text, and, where feasible, a
+     notice attributing the Software to its authors.
+
+2. COMMERCIAL USE REQUIRES A COMMERCIAL LICENSE
+Any use of the Software that is not use in an Open-Source Project — including,
+without limitation, use within a commercial organization, use to build,
+operate, or sell a commercial product, service, or proprietary application,
+or use for hire — requires a separate commercial license obtained from the
+copyright holder. Commercial use without such a license is prohibited.
+
+3. NO WARRANTY
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+4. LIMITATION OF LIABILITY
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+OR OTHER DEALINGS IN THE SOFTWARE.
+
+5. TERMINATION
+This license terminates automatically upon any breach of its terms. Rights
+granted under a commercial license are governed by that license agreement.
+
+For commercial licensing inquiries, contact the copyright holder.
