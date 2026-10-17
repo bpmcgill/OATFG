@@ -20,6 +20,22 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
       # The lint integration tests verify generated Python/JS suites with the real
       # toolchains; windows runners ship Python and Node, Robot Framework is added here.
       - name: Install Robot Framework (for generated-suite linting)
