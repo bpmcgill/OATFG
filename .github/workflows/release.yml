@@ -1,0 +1,59 @@
+name: Release
+
+# Creates a GitHub Release with a packaged Windows build whenever a semver tag (v*) is pushed:
+#   git tag v1.0.0 && git push origin v1.0.0
+
+on:
+  push:
+    tags: [ "v*" ]
+  # Manual runs: Actions tab → Release → Run workflow → enter the tag (e.g. v0.0.1)
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.0.1)"
+        required: true
+        default: "v0.0.1"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/Directory.Build.props') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Build
+        run: dotnet build OATFG.sln -c Release --nologo
+
+      - name: Test
+        run: dotnet test OATFG.sln -c Release --no-build --nologo
+
+      - name: Publish UI (win-x64, self-contained)
+        run: dotnet publish OATFG.UI/OATFG.UI.csproj -c Release -r win-x64 --self-contained true -o publish/win-x64
+
+      - name: Package
+        shell: pwsh
+        run: Compress-Archive -Path publish/win-x64/* -DestinationPath OATFG.UI-win-x64.zip
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag }}
+          files: OATFG.UI-win-x64.zip
+          generate_release_notes: true
