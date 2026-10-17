@@ -55,7 +55,7 @@ namespace OATFG.CSXUnitGenerator
                 var requestBody = GetRequestBody(operation);
                 var responses = GetResponses(operation);
                 var summary = operation.Operation.Summary ?? Resources.Resources.NoSummaryForEndpoint;
-                var tagName = operation.Operation.Tags.FirstOrDefault();
+                var tagName = operation.Operation.Tags?.FirstOrDefault();
 
                 return new()
                 {
@@ -213,11 +213,17 @@ namespace OATFG.CSXUnitGenerator
 
             foreach (var response in operation.Operation.Responses)
             {
+                // Skip non-numeric keys (e.g. "default") instead of failing the whole collection
+                if (!int.TryParse(response.Key, out int statusCode))
+                {
+                    continue;
+                }
+
                 responses.Add(new Response
                 {
-                    StatusCode = int.Parse(response.Key),
+                    StatusCode = statusCode,
                     Description = response.Value.Description,
-                    Body = response.Key == "200" ? GetResponseBody(operation) : null
+                    Body = statusCode == 200 ? GetResponseBody(operation) : null
                 });
             }
             Console.WriteLine();
@@ -316,7 +322,7 @@ namespace OATFG.CSXUnitGenerator
                 TestProjectName = projectName + "Tests",
                 Endpoints = CreateCSXEndpointsFromAPI(document),
                 Namespace = projectName?.MakeFileSafeName() ?? document.Info.Title.MakeFileSafeName(),
-                Server = document.Servers.FirstOrDefault()?.Url ?? "https://localhost:5000",
+                Server = document.Servers?.FirstOrDefault()?.Url ?? "https://localhost:5000",
                 XUnitExtensionProjectName = configurationRoot.GetSection("XUnitExtensionProjectName").Value ?? "XUnitExtensions"
             };
 

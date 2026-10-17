@@ -1,0 +1,192 @@
+<Window x:Class="OATFG.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="OATFG — OpenAPI Test Suite Generator"
+        Width="1140"
+        Height="780"
+        MinWidth="900"
+        MinHeight="620"
+        Background="{DynamicResource WindowBackgroundBrush}"
+        Foreground="{DynamicResource TextBrush}"
+        FontFamily="Segoe UI"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,14" LastChildFill="False">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Theme" Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" Margin="0,0,8,0" />
+                <ComboBox Width="200"
+                          ItemsSource="{Binding ThemeManager.AvailableThemes}"
+                          SelectedItem="{Binding CurrentTheme, Mode=TwoWay}" />
+            </StackPanel>
+            <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center">
+                <Run Text="OATFG" FontSize="22" FontWeight="Bold" FontStyle="Italic"
+                     Foreground="{DynamicResource AccentBrush}" />
+                <Run Text="  OpenAPI Test Suite Generator" FontSize="16"
+                     Foreground="{DynamicResource TextMutedBrush}" />
+            </TextBlock>
+        </DockPanel>
+
+        <!-- Body -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Input panel -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
+                        <Label Content="OpenAPI specification" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" Text="{Binding SpecPath, UpdateSourceTrigger=PropertyChanged}"
+                                     VerticalContentAlignment="Center" />
+                            <Button Grid.Column="1" Content="Browse…" Margin="8,0,0,0"
+                                    Command="{Binding BrowseSpecCommand}" />
+                        </Grid>
+
+                        <Label Content="Project name (optional)" />
+                        <TextBox Text="{Binding ProjectName, UpdateSourceTrigger=PropertyChanged}"
+                                 VerticalContentAlignment="Center" />
+
+                        <Label Content="Environment" />
+                        <TextBox Text="{Binding EnvironmentName, UpdateSourceTrigger=PropertyChanged}"
+                                 VerticalContentAlignment="Center" />
+
+                        <Label Content="Authentication" />
+                        <ComboBox ItemsSource="{Binding AuthTypes}"
+                                  SelectedItem="{Binding AuthenticationType, Mode=TwoWay}" />
+
+                        <Label Content="Output folder" />
+                        <TextBox Text="{Binding OutputRoot, UpdateSourceTrigger=PropertyChanged}"
+                                 VerticalContentAlignment="Center" />
+
+                        <Label Content="Output languages" />
+                        <CheckBox Content="C# / xUnit (.NET 10 LTS)" IsChecked="{Binding GenerateCSharp}" />
+                        <CheckBox Content="Python (pytest + requests)" IsChecked="{Binding GeneratePython}" />
+                        <CheckBox Content="Robot Framework (RequestsLibrary)" IsChecked="{Binding GenerateRobotFramework}" />
+                        <CheckBox Content="JavaScript (node:test + fetch)" IsChecked="{Binding GenerateJavaScript}" />
+
+                        <Button Style="{StaticResource PrimaryButton}"
+                                Content="Generate Test Suites"
+                                Margin="0,18,0,0"
+                                Command="{Binding GenerateCommand}" />
+
+                        <TextBlock Text="{Binding StatusMessage}"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   TextWrapping="Wrap"
+                                   Margin="0,14,0,0"
+                                   FontSize="12.5" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Results panel -->
+            <Border Grid.Column="2"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="16">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Label Grid.Row="0" Content="Generated files" />
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding GeneratedFiles}"
+                             Margin="0,0,0,14">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="12" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <Label Grid.Row="2" Content="Lint results" />
+                    <ListBox Grid.Row="3" ItemsSource="{Binding LintResults}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" ToolTip="{Binding Output}">
+                                    <TextBlock Text="✓" Margin="0,0,6,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource NeonGreen}" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Passed}" Value="False">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="✗" Margin="0,0,6,0">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Foreground" Value="{DynamicResource NeonRed}" />
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Passed}" Value="False">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding FilePath}" FontFamily="Consolas" FontSize="12" />
+                                    <TextBlock Text=" — " Foreground="{DynamicResource TextMutedBrush}" />
+                                    <TextBlock Text="{Binding Language}" Foreground="{DynamicResource TextMutedBrush}" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Footer: theme neon palette -->
+        <Border Grid.Row="2" Margin="0,14,0,0" Padding="0,8,0,0">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Neon palette"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonBlue}" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonPurple}" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonRed}" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonGreen}" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonPink}" />
+                <Border Width="20" Height="20" CornerRadius="4" Margin="0,0,6,0"
+                        Background="{DynamicResource NeonOrange}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

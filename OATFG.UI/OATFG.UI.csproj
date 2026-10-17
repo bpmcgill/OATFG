@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>OATFG.UI</AssemblyName>
+    <RootNamespace>OATFG.UI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OATFG.Core\OATFG.Core.csproj" />
+    <ProjectReference Include="..\OATFG.CSXUnitGenerator\OATFG.CSXUnitGenerator.csproj" />
+    <ProjectReference Include="..\OATFG.Generators\OATFG.Generators.csproj" />
+  </ItemGroup>
+
+</Project>
