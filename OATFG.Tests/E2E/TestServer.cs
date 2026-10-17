@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OATFG.Tests.E2E;
 
@@ -9,10 +12,16 @@ namespace OATFG.Tests.E2E;
 /// </summary>
 public static class TestServer
 {
-    public static WebApplication Create(int port)
+    /// <summary>
+    /// Creates the server bound to an OS-assigned port (port 0). Call
+    /// <see cref="GetAddress"/> after StartAsync to learn the actual address;
+    /// binding directly on port 0 avoids the TOCTOU probe-socket race of
+    /// "reserve a free port, close it, then rebind".
+    /// </summary>
+    public static WebApplication Create()
     {
         var app = WebApplication.Create();
-        app.Urls.Add($"http://localhost:{port}");
+        app.Urls.Add("http://127.0.0.1:0");
 
         app.MapGet("/users", () => Results.Json(new[] { new { id = 1, name = "Ada" } }));
         app.MapPost("/users", async (HttpContext context) =>
@@ -48,5 +57,13 @@ public static class TestServer
         return document.RootElement.TryGetProperty(property, out System.Text.Json.JsonElement value)
             ? value.GetString()
             : null;
+    }
+
+    /// <summary>Actual bound address (host:port) once the app has started.</summary>
+    public static string GetAddress(WebApplication app)
+    {
+        var feature = app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>();
+        return feature?.Addresses.First()
+            ?? throw new InvalidOperationException("Server address unavailable after start.");
     }
 }

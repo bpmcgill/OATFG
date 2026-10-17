@@ -38,6 +38,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: ${{ runner.os }}-pip-${{ hashFiles('.github/workflows/release.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # The lint integration tests verify generated Python/JS/Robot suites with the real
+      # toolchains; windows runners ship Python and Node, Robot Framework is added here.
+      - name: Install Robot Framework (for generated-suite linting)
+        run: python -m pip install robotframework robotframework-requests
+
       - name: Build
         run: dotnet build OATFG.sln -c Release --nologo
 

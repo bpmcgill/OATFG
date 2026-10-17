@@ -34,13 +34,19 @@ public static class LintService
         return new LintResult(filePath, target.ToString(), ToolAvailable: true, Passed: exitCode == 0, output);
     }
 
-    /// <summary>Probes whether the toolchain for a target can be started (used to skip tests cleanly).</summary>
+    /// <summary>
+    /// Probes whether the toolchain for a target is present AND healthy (used to skip tests cleanly).
+    /// A probe must exit 0: e.g. `python -m robot --version` starts python fine even when the robot
+    /// module is missing (exit 1), and Robot Framework 7.5 on some pythons exits non-zero after
+    /// printing --version/--help — so robot is probed by an actual module import instead.
+    /// </summary>
     public static bool IsToolAvailable(LintTarget target) => target switch
     {
         LintTarget.Python => Probe("python", "--version"),
         LintTarget.JavaScript => Probe("node", "--version"),
-        // robot is on PATH for regular installs; pip --user installs need `python -m robot`
-        LintTarget.Robot => Probe("robot", "--version") || Probe("python", "-m robot --version"),
+        // robot is on PATH for regular installs; pip --user installs need `python -m robot`;
+        // "import robot" is the exact check for module availability
+        LintTarget.Robot => Probe("robot", "--version") || Probe("python", "-c \"import robot\""),
         _ => false
     };
 
@@ -58,7 +64,9 @@ public static class LintService
         try
         {
             (int? exitCode, _) = TryRunAsync(tool, arguments).Result;
-            return exitCode is not null;
+            // Non-zero means the tool started but is unusable (e.g. `python -m robot` with
+            // the module missing); only a successful (0) exit counts as available.
+            return exitCode == 0;
         }
         catch
         {

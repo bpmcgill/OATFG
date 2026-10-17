@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.Net;
-using System.Net.Sockets;
 using System.Text.RegularExpressions;
 using OATFG.CSXUnitGenerator;
 using Xunit;
@@ -17,11 +15,9 @@ public class EndToEndTests
     [Fact]
     public async Task GeneratedFramework_BuildsAndPassesEndToEndTests_AgainstLiveServer()
     {
-        int port = GetFreePort();
-        string serverUrl = $"http://localhost:{port}";
-
-        var app = TestServer.Create(port);
+        var app = TestServer.Create();
         await app.StartAsync();
+        string serverUrl = TestServer.GetAddress(app);
         try
         {
             string root = Path.Combine(Path.GetTempPath(), "oatfg-e2e-" + Guid.NewGuid().ToString("N"));
@@ -73,15 +69,6 @@ public class EndToEndTests
         }
     }
 
-    private static int GetFreePort()
-    {
-        var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
-    }
-
     private static int ParsePassedCount(string output)
     {
         Match match = Regex.Match(output, @"Passed:\s+(\d+)");
@@ -107,14 +94,17 @@ public class EndToEndTests
         process.Start();
         Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
         Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+        var stopwatch = Stopwatch.StartNew();
         bool exited = process.WaitForExit(timeoutSeconds * 1000);
         string stdout = await stdoutTask;
         string stderr = await stderrTask;
+        stopwatch.Stop();
 
         if (!exited)
         {
             process.Kill(entireProcessTree: true);
-            throw new TimeoutException($"dotnet {arguments} timed out after {timeoutSeconds}s.\n{stdout}\n{stderr}");
+            throw new TimeoutException(
+                $"dotnet {arguments} timed out after {stopwatch.Elapsed.TotalSeconds:F0}s (limit {timeoutSeconds}s).\n{stdout}\n{stderr}");
         }
 
         return (process.ExitCode, stdout + Environment.NewLine + stderr);
