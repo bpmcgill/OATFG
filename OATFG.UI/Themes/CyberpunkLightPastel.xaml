@@ -1,0 +1,27 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Cyberpunk Light Pastel — airy light canvas, soft neon accents kept readable -->
+    <LinearGradientBrush x:Key="WindowBackgroundBrush" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#F7F9FF" Offset="0" />
+        <GradientStop Color="#FFFFFF" Offset="1" />
+    </LinearGradientBrush>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="SurfaceAltBrush" Color="#F2F5FD" />
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FDFDFF" />
+    <SolidColorBrush x:Key="BorderBrush" Color="#DCE4F6" />
+    <SolidColorBrush x:Key="TextBrush" Color="#232A3D" />
+    <SolidColorBrush x:Key="TextMutedBrush" Color="#6B7A9C" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#4A90C4" />
+    <SolidColorBrush x:Key="AccentBrushBright" Color="#6FA8D4" />
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="AccentBrushDim" Color="#DCEAF6" />
+
+    <SolidColorBrush x:Key="NeonBlue" Color="#7FD8E8" />
+    <SolidColorBrush x:Key="NeonPurple" Color="#B79DF0" />
+    <SolidColorBrush x:Key="NeonRed" Color="#F29CBB" />
+    <SolidColorBrush x:Key="NeonGreen" Color="#93E3C2" />
+    <SolidColorBrush x:Key="NeonPink" Color="#F5A8E3" />
+    <SolidColorBrush x:Key="NeonOrange" Color="#F5C495" />
+
+</ResourceDictionary>

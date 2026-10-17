@@ -9,7 +9,6 @@ namespace OATFG.CSXUnitGenerator
         private API _api { get; set; }
         private string coreProjectFolder { get; set; }
         private string testProjectFolder { get; set; }
-        private string xunitExtensionProjectFolder { get; set; }
         private string testDataFolder { get; set; }
         private string requestBodiesFolder { get; set; }
         private string solutionFolder { get; set; }
@@ -24,7 +23,6 @@ namespace OATFG.CSXUnitGenerator
             testProjectFolder = Path.Combine(solutionFolder, "Tests");
             testDataFolder = "./Tests/TestData";
             requestBodiesFolder = $"{testDataFolder}/RequestBodies";
-            xunitExtensionProjectFolder = Path.Combine(solutionFolder, "Extensions");
 
             GenerateFolderStructure();
         }
@@ -37,7 +35,7 @@ namespace OATFG.CSXUnitGenerator
             string xunitExtensionNamespace = _api.Namespace + ".XUnitExtensions";
 
             // Generate the access client stub class
-            GenerateAccessClientStub(coreNamespace);
+            GenerateAccessClientStub(coreNamespace, _api.Server);
 
             // Generate the endpoint base class
             GenerateEndpointBaseClass(coreNamespace);
@@ -47,6 +45,9 @@ namespace OATFG.CSXUnitGenerator
             {
                 GenerateEndpointFileFromAPI(endpoint, coreProjectFolder, coreNamespace, requestBodiesFolder, endpoint.OperationId.MakeFileSafeName());
             }
+
+            // Generate the project files (csproj, appsettings and solution) so the framework is buildable
+            GenerateProjectFiles(coreNamespace);
         }
 
         public static void GenerateEndpointFileFromAPI(Endpoint endpoint, string coreProjectFolder, string coreNamespace, string requestBodiesFolder, string classAndFileName)
@@ -66,7 +67,7 @@ namespace OATFG.CSXUnitGenerator
             // Add the using statements
             sb.AppendLine($"using {coreNamespace}.Client;".PrependSpaces(0));
             sb.AppendLine($"using {coreNamespace}.Data;".PrependSpaces(0));
-            sb.AppendLine($"using Xunit.Abstractions;".PrependSpaces(0));
+            sb.AppendLine("using System.Net.Http;".PrependSpaces(0));
             sb.AppendLine();
 
             // Add the namespace
@@ -74,19 +75,15 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("{".PrependSpaces(0));
 
             // Add the class
-            sb.AppendLine($"public class {classAndFileName} : EndpointBase".PrependSpaces(4));
+            sb.AppendLine($"public class {endpoint.GeneratedMethodName} : EndpointBase".PrependSpaces(4));
             sb.AppendLine("{".PrependSpaces(4));
-
-            // Add the TestOutputHelper field
-            sb.AppendLine("private ITestOutputHelper _log;".PrependSpaces(8));
-            sb.AppendLine();
 
             // Add the AccessClient field
             sb.AppendLine("private AccessClient _accessClient;".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the dependency injection constructor
-            sb.AppendLine($"public {classAndFileName}() : base()".PrependSpaces(8));
+            sb.AppendLine($"public {endpoint.GeneratedMethodName}() : base()".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
 
             // Add the AccessClient instantiation
@@ -159,25 +156,24 @@ namespace OATFG.CSXUnitGenerator
 
             sb.Append('(');
 
-            // loop through the path varaibles and add them to the method signature
+            // add the path variables and query parameters to the method signature
+            List<string> parameterNames = new();
+            parameterNames.AddRange(endpoint.PathVariables.Select(pathVariable => pathVariable.Name));
+            parameterNames.AddRange(endpoint.QueryParameters.Select(queryParameter => queryParameter.Name));
 
-            if (endpoint.PathVariables.Count > 0)
-            {
-                foreach (var pathVariable in endpoint.PathVariables)
-                {
-                    sb.Append($"string {pathVariable.Name}");
-
-                    //if the path variable is not the last one, add a comma
-                    if (endpoint.PathVariables.IndexOf(pathVariable) != endpoint.PathVariables.Count - 1)
-                    {
-                        sb.Append(", ");
-                    }
-                }
-            }
+            sb.Append(string.Join(", ", parameterNames.Select(name => $"string {name}")));
 
             sb.AppendLine(")");
 
-            sb.AppendLine($"=> $\"{endpoint.EndpointPath}\";".PrependSpaces(12));
+            // append any query parameters to the interpolated endpoint path
+            string interpolationPath = endpoint.EndpointPath;
+            if (endpoint.QueryParameters.Count > 0)
+            {
+                string queryString = string.Join("&", endpoint.QueryParameters.Select(queryParameter => $"{queryParameter.Name}={{{queryParameter.Name}}}"));
+                interpolationPath = $"{interpolationPath}?{queryString}";
+            }
+
+            sb.AppendLine($"=> $\"{interpolationPath}\";".PrependSpaces(12));
 
             return sb.ToString();
         }
@@ -195,19 +191,12 @@ namespace OATFG.CSXUnitGenerator
 
             sb.Append($"public async Task<APIResponse> Request(".PrependSpaces(8));
 
-            if (endpoint.PathVariables.Count > 0)
-            {
-                foreach (var pathVariable in endpoint.PathVariables)
-                {
-                    sb.Append($"string {pathVariable.Name}");
+            // add the path variables and query parameters to the method signature
+            List<string> parameterNames = new();
+            parameterNames.AddRange(endpoint.PathVariables.Select(pathVariable => pathVariable.Name));
+            parameterNames.AddRange(endpoint.QueryParameters.Select(queryParameter => queryParameter.Name));
 
-                    //if the path variable is not the last one, add a comma
-                    if (endpoint.PathVariables.IndexOf(pathVariable) != endpoint.PathVariables.Count - 1)
-                    {
-                        sb.Append(", ");
-                    }
-                }
-            }
+            sb.Append(string.Join(", ", parameterNames.Select(name => $"string {name}")));
 
             sb.AppendLine(")");
 
@@ -376,43 +365,44 @@ namespace OATFG.CSXUnitGenerator
 
             if (endpoint.RequestBody != null)
             {
-                sb.AppendLine($"pathToBody ??= $\"{requestBodyFolder}{endpoint.GeneratedMethodName}.json\";".PrependSpaces(12));
+                sb.AppendLine($"pathToBody ??= $\"{requestBodyFolder}/{endpoint.GeneratedMethodName}.json\";".PrependSpaces(12));
                 sb.Append($"return await CreateRequestWithBody({HttpMethod}, {endpoint.GeneratedPrivateFieldName}(".PrependSpaces(12));
             }
             else
             {
                 sb.Append($"return await CreateRequest({HttpMethod}, {endpoint.GeneratedPrivateFieldName}(".PrependSpaces(12));
-
-                if (endpoint.PathVariables.Count > 0)
-                {
-                    foreach (var pathVariable in endpoint.PathVariables)
-                    {
-                        sb.Append($"{pathVariable.Name}");
-
-                        //if the path variable is not the last one, add a comma
-                        if ((endpoint.PathVariables.IndexOf(pathVariable) != endpoint.PathVariables.Count - 1) || (endpoint.QueryParameters.Count > 0))
-                        {
-                            sb.Append(", ");
-                        }
-                    }
-                }
-
-                if (endpoint.QueryParameters.Count > 0)
-                {
-                    foreach (var queryParameter in endpoint.QueryParameters)
-                    {
-                        sb.Append($"{queryParameter.Name}: {queryParameter.Name}");
-
-                        //if the query parameter is not the last one, add a comma
-                        if (endpoint.QueryParameters.IndexOf(queryParameter) != endpoint.QueryParameters.Count - 1)
-                        {
-                            sb.Append(", ");
-                        }
-                    }
-                }
             }
 
-            sb.AppendLine("));");
+            bool firstArgument = true;
+            foreach (var pathVariable in endpoint.PathVariables)
+            {
+                if (!firstArgument)
+                {
+                    sb.Append(", ");
+                }
+                sb.Append(pathVariable.Name);
+                firstArgument = false;
+            }
+
+            foreach (var queryParameter in endpoint.QueryParameters)
+            {
+                if (!firstArgument)
+                {
+                    sb.Append(", ");
+                }
+                sb.Append($"{queryParameter.Name}: {queryParameter.Name}");
+                firstArgument = false;
+            }
+
+            // close the path method call
+            sb.Append(')');
+
+            if (endpoint.RequestBody != null)
+            {
+                sb.Append(", pathToBody");
+            }
+
+            sb.AppendLine(");");
 
             sb.AppendLine("}".PrependSpaces(8));
 
@@ -420,7 +410,7 @@ namespace OATFG.CSXUnitGenerator
 
         }
 
-        private void GenerateAccessClientStub(string coreNamespace)
+        private void GenerateAccessClientStub(string coreNamespace, string server)
         {
             string accessClientStubFile = Path.Combine(coreProjectFolder, "Client", "AccessClient.cs");
 
@@ -436,7 +426,6 @@ namespace OATFG.CSXUnitGenerator
 
             // Add the using statements
             sb.AppendLine("using Microsoft.Extensions.Configuration;");
-            sb.AppendLine("using System.Net;");
             sb.AppendLine("using System.Net.Http;");
             sb.AppendLine("using Xunit.Abstractions;");
             sb.AppendLine();
@@ -444,11 +433,20 @@ namespace OATFG.CSXUnitGenerator
             // Add the namespace
             sb.AppendLine($"namespace {coreNamespace}.Client");
             sb.AppendLine("{");
-            sb.AppendLine("public class AccessClient".PrependSpaces(4));
+            sb.AppendLine("public class AccessClient : IDisposable".PrependSpaces(4));
             sb.AppendLine("{".PrependSpaces(4));
             sb.AppendLine("private ConfigurationBuilder _builder;".PrependSpaces(8));
             sb.AppendLine("private IConfigurationRoot _config;".PrependSpaces(8));
-            sb.AppendLine("public ITestOutputHelper? log".PrependSpaces(8));
+            sb.AppendLine("private readonly HttpClient _httpClient = new();".PrependSpaces(8));
+            sb.AppendLine();
+
+            // Add the APIHost property, defaulting to the server from the OpenAPI document
+            sb.AppendLine("public string APIHost { get; }".PrependSpaces(8));
+            sb.AppendLine();
+
+            // Add the log field
+            sb.AppendLine("public ITestOutputHelper? log;".PrependSpaces(8));
+            sb.AppendLine();
 
             // Add the constructor
             sb.AppendLine("public AccessClient()".PrependSpaces(8));
@@ -456,10 +454,17 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("_builder = new ConfigurationBuilder();".PrependSpaces(12));
             sb.AppendLine("_builder.AddJsonFile(\"appsettings.json\");".PrependSpaces(12));
             sb.AppendLine("_config = _builder.Build();".PrependSpaces(12));
+            sb.AppendLine($"APIHost = _config[\"APIHost\"] ?? \"{server}\";".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
 
-            sb.AppendLine("// TODO: Complete the access client class".PrependSpaces(8));
+            // Add the send method
+            sb.AppendLine("public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request)".PrependSpaces(8));
+            sb.AppendLine("=> _httpClient.SendAsync(request);".PrependSpaces(8));
+            sb.AppendLine();
+
+            // Add the dispose method
+            sb.AppendLine("public void Dispose() => _httpClient.Dispose();".PrependSpaces(8));
 
             // close the file out
             sb.AppendLine("}".PrependSpaces(4));
@@ -486,7 +491,9 @@ namespace OATFG.CSXUnitGenerator
             // Add the using statements
             sb.AppendLine($"using {coreNamespace}.Client;");
             sb.AppendLine($"using {coreNamespace}.Data;");
-            sb.AppendLine($"using Xunit.Abstractions;");
+            sb.AppendLine("using System.Net.Http;");
+            sb.AppendLine("using System.Text;");
+            sb.AppendLine("using Xunit.Abstractions;");
             sb.AppendLine();
 
             // Add the namespace
@@ -498,18 +505,18 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("{".PrependSpaces(4));
 
             // Add the private fields
-            sb.AppendLine("private AccessClient _client;".PrependSpaces(8));
+            sb.AppendLine("private AccessClient _accessClient = new();".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the public fields
-            sb.AppendLine("public ITestOutputHelper? _log".PrependSpaces(8));
+            sb.AppendLine("public ITestOutputHelper? _log;".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the constructor
             sb.AppendLine("public EndpointBase(ITestOutputHelper log)".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
-            sb.AppendLine("_client = new AccessClient();".PrependSpaces(12));
-            sb.AppendLine("_client.log = log;".PrependSpaces(12));
+            sb.AppendLine("_accessClient = new AccessClient();".PrependSpaces(12));
+            sb.AppendLine("_accessClient.log = log;".PrependSpaces(12));
             sb.AppendLine("_log = log;".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
@@ -523,27 +530,27 @@ namespace OATFG.CSXUnitGenerator
             // Add the Dispose method
             sb.AppendLine("public void Dispose()".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
+            sb.AppendLine("_accessClient?.Dispose();".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the APIRequest method
-            sb.AppendLine("public virtyal async Task<APIResponse> APIRequest(HttpRequestMessage httpRequestMessage)".PrependSpaces(8));
+            sb.AppendLine("public virtual async Task<APIResponse> APIRequest(HttpRequestMessage httpRequestMessage)".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
             //add the try block
             sb.AppendLine("try".PrependSpaces(12));
             sb.AppendLine("{".PrependSpaces(12));
-            sb.AppendLine("HttpClient client = _client ?? throw new Exception($\"Client unavailable\");".PrependSpaces(16));
+            sb.AppendLine("HttpResponseMessage response = await _accessClient.SendAsync(httpRequestMessage);".PrependSpaces(16));
             sb.AppendLine();
-            sb.AppendLine("HttpResponseMessage response = client.SendAsync(httpRequestMessage).Result;".PrependSpaces(16));
             sb.AppendLine("string responseCode = response.StatusCode.ToString();".PrependSpaces(16));
-            sb.AppendLine("Task<string> body = response.Content.ReadAsStringAsync();".PrependSpaces(16));
+            sb.AppendLine("string body = await response.Content.ReadAsStringAsync();".PrependSpaces(16));
             sb.AppendLine();
-            sb.AppendLine("return new APIResponse{responseCode, body};".PrependSpaces(16));
+            sb.AppendLine("return new APIResponse(responseCode, body);".PrependSpaces(16));
             sb.AppendLine("}".PrependSpaces(12));
             //add the catch block
             sb.AppendLine("catch (Exception ex)".PrependSpaces(12));
             sb.AppendLine("{".PrependSpaces(12));
-            sb.AppendLine("Log($\"Exception: {{ex.Message}}\");".PrependSpaces(16));
+            sb.AppendLine("Log($\"Exception: {ex.Message}\");".PrependSpaces(16));
             sb.AppendLine("throw;".PrependSpaces(16));
             sb.AppendLine("}".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
@@ -562,7 +569,7 @@ namespace OATFG.CSXUnitGenerator
             sb.AppendLine("}".PrependSpaces(8));
 
             // Add the CreateRequest method
-            sb.AppendLine("public virtual async Task<ApiRequest> CreateRequest(HttpMethod method, string endpointPath)".PrependSpaces(8));
+            sb.AppendLine("public virtual async Task<APIResponse> CreateRequest(HttpMethod method, string endpointPath)".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
             // add the try block
             sb.AppendLine("try".PrependSpaces(12));
@@ -574,14 +581,14 @@ namespace OATFG.CSXUnitGenerator
             // add the catch block
             sb.AppendLine("catch (Exception ex)".PrependSpaces(12));
             sb.AppendLine("{".PrependSpaces(12));
-            sb.AppendLine("Log($\"Exception: {{ex.Message}}\");".PrependSpaces(16));
+            sb.AppendLine("Log($\"Exception: {ex.Message}\");".PrependSpaces(16));
             sb.AppendLine("throw;".PrependSpaces(16));
             sb.AppendLine("}".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the CreateRequestWithBody method
-            sb.AppendLine("public virtual async Task<ApiRequest> CreateRequestWithBody(HttpMethod method, string endpointPath, string pathToBody)".PrependSpaces(8));
+            sb.AppendLine("public virtual async Task<APIResponse> CreateRequestWithBody(HttpMethod method, string endpointPath, string pathToBody)".PrependSpaces(8));
             sb.AppendLine("{".PrependSpaces(8));
             // add the try block
             sb.AppendLine("try".PrependSpaces(12));
@@ -598,14 +605,14 @@ namespace OATFG.CSXUnitGenerator
             // add the catch block
             sb.AppendLine("catch (Exception ex)".PrependSpaces(12));
             sb.AppendLine("{".PrependSpaces(12));
-            sb.AppendLine("Log($\"Exception: {{ex.Message}}\");".PrependSpaces(16));
+            sb.AppendLine("Log($\"Exception: {ex.Message}\");".PrependSpaces(16));
             sb.AppendLine("throw;".PrependSpaces(16));
             sb.AppendLine("}".PrependSpaces(12));
             sb.AppendLine("}".PrependSpaces(8));
             sb.AppendLine();
 
             // Add the Log method
-            sb.AppendLine("public void Log(string message) => _log.WriteLine(message);".PrependSpaces(8));
+            sb.AppendLine("public void Log(string message) => _log?.WriteLine(message);".PrependSpaces(8));
 
             // Close the class
             sb.AppendLine("}".PrependSpaces(4));
@@ -613,6 +620,165 @@ namespace OATFG.CSXUnitGenerator
 
             // Write the file
             File.WriteAllText(endpointBaseClassFile, sb.ToString());
+        }
+
+        private void GenerateProjectFiles(string coreNamespace)
+        {
+            GenerateResponsesFile(coreNamespace);
+            GenerateCoreProjectFile();
+            GenerateTestProjectFile();
+            GenerateTestAppSettings();
+            GenerateSolutionFile();
+        }
+
+        private void GenerateResponsesFile(string coreNamespace)
+        {
+            string responsesFile = Path.Combine(coreProjectFolder, "Data", "Responses.cs");
+
+            if (!Directory.Exists(Path.Combine(coreProjectFolder, "Data")))
+            {
+                Directory.CreateDirectory(Path.Combine(coreProjectFolder, "Data"));
+            }
+
+            StringBuilder sb = new();
+
+            sb.AppendLine($"namespace {coreNamespace}.Data");
+            sb.AppendLine("{");
+            sb.AppendLine("/// <summary>The response returned by an endpoint request</summary>".PrependSpaces(4));
+            sb.AppendLine("public class APIResponse".PrependSpaces(4));
+            sb.AppendLine("{".PrependSpaces(4));
+            sb.AppendLine("public string StatusCode { get; }".PrependSpaces(8));
+            sb.AppendLine("public string Body { get; }".PrependSpaces(8));
+            sb.AppendLine();
+            sb.AppendLine("public APIResponse(string statusCode, string body)".PrependSpaces(8));
+            sb.AppendLine("{".PrependSpaces(8));
+            sb.AppendLine("StatusCode = statusCode;".PrependSpaces(12));
+            sb.AppendLine("Body = body;".PrependSpaces(12));
+            sb.AppendLine("}".PrependSpaces(8));
+            sb.AppendLine("}".PrependSpaces(4));
+            sb.AppendLine("}");
+
+            File.WriteAllText(responsesFile, sb.ToString());
+        }
+
+        private void GenerateCoreProjectFile()
+        {
+            string coreProjectFile = Path.Combine(coreProjectFolder, $"{_api.CoreProjectName}.csproj");
+
+            StringBuilder sb = new();
+
+            sb.AppendLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
+            sb.AppendLine();
+            sb.AppendLine("  <PropertyGroup>");
+            sb.AppendLine("    <TargetFramework>net10.0</TargetFramework>");
+            sb.AppendLine("    <ImplicitUsings>enable</ImplicitUsings>");
+            sb.AppendLine("    <Nullable>enable</Nullable>");
+            sb.AppendLine("    <IsTestProject>false</IsTestProject>");
+            sb.AppendLine("  </PropertyGroup>");
+            sb.AppendLine();
+            sb.AppendLine("  <ItemGroup>");
+            sb.AppendLine("    <PackageReference Include=\"Microsoft.Extensions.Configuration.Json\" Version=\"10.0.13\" />");
+            sb.AppendLine("    <PackageReference Include=\"xunit\" Version=\"2.9.3\" />");
+            sb.AppendLine("  </ItemGroup>");
+            sb.AppendLine();
+            sb.AppendLine("</Project>");
+
+            File.WriteAllText(coreProjectFile, sb.ToString());
+        }
+
+        private void GenerateTestProjectFile()
+        {
+            string testProjectFile = Path.Combine(testProjectFolder, $"{_api.TestProjectName}.csproj");
+
+            StringBuilder sb = new();
+
+            sb.AppendLine("<Project Sdk=\"Microsoft.NET.Sdk\">");
+            sb.AppendLine();
+            sb.AppendLine("  <PropertyGroup>");
+            sb.AppendLine("    <TargetFramework>net10.0</TargetFramework>");
+            sb.AppendLine("    <ImplicitUsings>enable</ImplicitUsings>");
+            sb.AppendLine("    <Nullable>enable</Nullable>");
+            sb.AppendLine("    <IsPackable>false</IsPackable>");
+            sb.AppendLine("    <IsTestProject>true</IsTestProject>");
+            sb.AppendLine("  </PropertyGroup>");
+            sb.AppendLine();
+            sb.AppendLine("  <ItemGroup>");
+            sb.AppendLine("    <PackageReference Include=\"Microsoft.NET.Test.Sdk\" Version=\"18.11.0\" />");
+            sb.AppendLine("    <PackageReference Include=\"xunit\" Version=\"2.9.3\" />");
+            sb.AppendLine("    <PackageReference Include=\"xunit.runner.visualstudio\" Version=\"4.0.1\">");
+            sb.AppendLine("      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>");
+            sb.AppendLine("      <PrivateAssets>all</PrivateAssets>");
+            sb.AppendLine("    </PackageReference>");
+            sb.AppendLine("  </ItemGroup>");
+            sb.AppendLine();
+            sb.AppendLine("  <ItemGroup>");
+            sb.AppendLine($"    <ProjectReference Include=\"..\\Core\\{_api.CoreProjectName}.csproj\" />");
+            sb.AppendLine("  </ItemGroup>");
+            sb.AppendLine();
+            sb.AppendLine("  <ItemGroup>");
+            sb.AppendLine("    <None Update=\"appsettings.json\">");
+            sb.AppendLine("      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>");
+            sb.AppendLine("    </None>");
+            sb.AppendLine("  </ItemGroup>");
+            sb.AppendLine();
+            sb.AppendLine("</Project>");
+
+            File.WriteAllText(testProjectFile, sb.ToString());
+        }
+
+        private void GenerateTestAppSettings()
+        {
+            string appSettingsFile = Path.Combine(testProjectFolder, "appsettings.json");
+
+            StringBuilder sb = new();
+
+            sb.AppendLine("{");
+            sb.AppendLine($"  \"APIHost\": \"{_api.Server}\"");
+            sb.AppendLine("}");
+
+            File.WriteAllText(appSettingsFile, sb.ToString());
+        }
+
+        private void GenerateSolutionFile()
+        {
+            string solutionFile = Path.Combine(solutionFolder, $"{_api.SolutionFolder}.sln");
+
+            string coreGuid = Guid.NewGuid().ToString().ToUpperInvariant();
+            string testGuid = Guid.NewGuid().ToString().ToUpperInvariant();
+
+            StringBuilder sb = new();
+
+            sb.AppendLine();
+            sb.AppendLine("Microsoft Visual Studio Solution File, Format Version 12.00");
+            sb.AppendLine("# Visual Studio Version 17");
+            sb.AppendLine("VisualStudioVersion = 17.9.34714.143");
+            sb.AppendLine("MinimumVisualStudioVersion = 10.0.40219.1");
+            sb.AppendLine($"Project(\"{{9A19103F-16F7-4668-BE54-9A1E7A4F7556}}\") = \"{_api.CoreProjectName}\", \"Core\\{_api.CoreProjectName}.csproj\", \"{{{coreGuid}}}\"");
+            sb.AppendLine("EndProject");
+            sb.AppendLine($"Project(\"{{9A19103F-16F7-4668-BE54-9A1E7A4F7556}}\") = \"{_api.TestProjectName}\", \"Tests\\{_api.TestProjectName}.csproj\", \"{{{testGuid}}}\"");
+            sb.AppendLine("EndProject");
+            sb.AppendLine("Global");
+            sb.AppendLine("\tGlobalSection(SolutionConfigurationPlatforms) = preSolution");
+            sb.AppendLine("\t\tDebug|Any CPU = Debug|Any CPU");
+            sb.AppendLine("\t\tRelease|Any CPU = Release|Any CPU");
+            sb.AppendLine("\tEndGlobalSection");
+            sb.AppendLine("\tGlobalSection(ProjectConfigurationPlatforms) = postSolution");
+
+            foreach (string guid in new[] { coreGuid, testGuid })
+            {
+                sb.AppendLine($"\t\t{{{guid}}}.Debug|Any CPU.ActiveCfg = Debug|Any CPU");
+                sb.AppendLine($"\t\t{{{guid}}}.Debug|Any CPU.Build.0 = Debug|Any CPU");
+                sb.AppendLine($"\t\t{{{guid}}}.Release|Any CPU.ActiveCfg = Release|Any CPU");
+                sb.AppendLine($"\t\t{{{guid}}}.Release|Any CPU.Build.0 = Release|Any CPU");
+            }
+
+            sb.AppendLine("\tEndGlobalSection");
+            sb.AppendLine("\tGlobalSection(SolutionProperties) = preSolution");
+            sb.AppendLine("\t\tHideSolutionNode = FALSE");
+            sb.AppendLine("\tEndGlobalSection");
+            sb.AppendLine("EndGlobal");
+
+            File.WriteAllText(solutionFile, sb.ToString());
         }
 
         public void GenerateFolderStructure()
@@ -632,19 +798,19 @@ namespace OATFG.CSXUnitGenerator
                 Directory.CreateDirectory(testProjectFolder);
             }
 
-            if (!Directory.Exists(testDataFolder))
+            // The embedded default request-body path stays relative (portable), but the folders
+            // themselves belong to the generated tests project
+            string absoluteTestDataFolder = Path.Combine(testProjectFolder, "TestData");
+            string absoluteRequestBodiesFolder = Path.Combine(absoluteTestDataFolder, "RequestBodies");
+
+            if (!Directory.Exists(absoluteTestDataFolder))
             {
-                Directory.CreateDirectory(testDataFolder);
+                Directory.CreateDirectory(absoluteTestDataFolder);
             }
 
-            if (!Directory.Exists(requestBodiesFolder))
+            if (!Directory.Exists(absoluteRequestBodiesFolder))
             {
-                Directory.CreateDirectory(requestBodiesFolder);
-            }
-
-            if (!Directory.Exists(xunitExtensionProjectFolder))
-            {
-                Directory.CreateDirectory(xunitExtensionProjectFolder);
+                Directory.CreateDirectory(absoluteRequestBodiesFolder);
             }
         }
     }

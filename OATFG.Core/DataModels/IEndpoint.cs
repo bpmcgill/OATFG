@@ -7,6 +7,6 @@
         string OperationId { get; set; }
         string? RequestBody { get; set; }
         string Summary { get; set; }
-        string TagName { get; set; }
+        string? TagName { get; set; }
     }
 }
